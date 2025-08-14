@@ -10,6 +10,9 @@ services:
 
     startCommand: |
       python manage.py migrate && \
+      if [ "$BOOTSTRAP_SUPERUSER" = "1" ]; then \
+        python manage.py createsuperuser --noinput || true; \
+      fi && \
       gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT
 
     envVars:
@@ -29,6 +32,8 @@ services:
         fromDatabase:
           name: reelmate-db
           property: connectionString
+      # The following are set in the dashboard, not hardcoded here:
+      # DJANGO_SUPERUSER_USERNAME / DJANGO_SUPERUSER_EMAIL / DJANGO_SUPERUSER_PASSWORD / BOOTSTRAP_SUPERUSER
 
 databases:
   - name: reelmate-db
