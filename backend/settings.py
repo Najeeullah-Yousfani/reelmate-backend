@@ -8,7 +8,7 @@ load_dotenv()  # reads .env if present
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-please-change")
-DEBUG = os.getenv("DEBUG", "0") in ("1", "true", "True")
+DEBUG = os.getenv("DEBUG", "0").lower() in ("1", "true", "yes")
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
 
 # Apps
@@ -51,15 +51,24 @@ TEMPLATES = [
 ]
 WSGI_APPLICATION = "backend.wsgi.application"
 
-# Database (DATABASE_URL wins; else default sqlite for safety)
-default_db = "sqlite:///" + str(BASE_DIR / "db.sqlite3")
-DATABASES = {
-    "default": dj_database_url.parse(
-        os.getenv("DATABASE_URL", default_db),
-        conn_max_age=600,
-        ssl_require=os.getenv("DB_SSL_REQUIRE", "0") in ("1", "true", "True"),
-    )
-}
+# Database (Postgres in prod, SQLite fallback locally/build)
+default_sqlite_url = "sqlite:///" + str(BASE_DIR / "db.sqlite3")
+db_url = os.getenv("DATABASE_URL", default_sqlite_url)
+
+is_postgres = db_url.startswith(("postgres://", "postgresql://"))
+ssl_require_flag = os.getenv("DB_SSL_REQUIRE", "0").lower() in ("1", "true", "yes")
+
+if is_postgres:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            db_url,
+            conn_max_age=600,
+            ssl_require=ssl_require_flag,  # only for Postgres
+        )
+    }
+else:
+    # SQLite path without sslmode
+    DATABASES = {"default": dj_database_url.parse(db_url)}
 
 # Static files
 STATIC_URL = "/static/"
