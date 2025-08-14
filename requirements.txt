@@ -1,0 +1,6 @@
+Django>=5.0
+gunicorn
+psycopg[binary]
+dj-database-url
+python-dotenv
+whitenoise[brotli]

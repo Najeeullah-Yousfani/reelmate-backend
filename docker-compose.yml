@@ -1,0 +1,33 @@
+
+
+services:
+  db:
+    image: postgres:15
+    container_name: reelmate_db
+    environment:
+      POSTGRES_DB: reelmate
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    container_name: reelmate_web
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DEBUG: "1"
+      SECRET_KEY: "dev-please-change"
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/reelmate"
+      ALLOWED_HOSTS: "*"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+
+volumes:
+  db_data:
